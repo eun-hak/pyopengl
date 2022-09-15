@@ -1,0 +1,9 @@
+{
+  "files.associations": {
+    "*.html": "html",
+    "LINESW.C": "cpp",
+    "LSTIPPLE.C": "cpp",
+    "POINTS.C": "cpp",
+    "ATOM2.C": "cpp"
+  }
+}

@@ -1,0 +1,143 @@
+#dlist.c
+#OpenGL SuperBible
+#Demonstrates rendering with and without display lists
+#Program by Richard S. Wright Jr.
+from OpenGL.GL import *
+from OpenGL.GLU import *
+from OpenGL.GLUT import *
+from OpenGLCommon import *
+from TGACommon import *
+#include "../../Common/OpenGLSB.h"	#System and OpenGL Stuff
+#include "../../Common/GLTools.h"	#OpenGL toolkit
+#include <math.h>
+
+yRot = 0.0
+GLuint dlShip;          #Display list identifier for the ship
+
+#Function in ship.c
+def DrawShip(void):
+    return
+        
+#Called to draw scene
+def RenderScene(void):
+    
+    global yRot
+    yRot += 0.5;
+        
+    #Clear the window with current clearing color
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+        
+    glTranslatef(0.0, 0.0, -15.);
+    glRotatef(-70.0, 1.0, 0.0, 0.0);
+    glRotatef(yRot, 0.0, 0.0, 1.0);
+
+    #//DrawShip();
+    glCallList(dlShip);
+    
+    glPopMatrix();
+    
+    #Do the buffer Swap
+    glutSwapBuffers();
+    
+
+
+#This function does any needed initialization on the rendering
+#context. 
+def SetupRC():
+    
+    #Bluish background
+    glClearColor(0.0, 0.0, .50, 1.0 );
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+        
+    #Lit texture environment
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    
+    #Load the ship texture
+    pImage = None
+    iWidth = [0]
+    iHeight = [0]
+    eFormat = [0]
+    iComponents = [0]
+    #GLint iWidth, iHeight,iComponents;
+    #GLenum eFormat;
+    pBytes = LoadTGA("YellowSub.tga", iWidth, iHeight, iComponents, eFormat);    
+    glTexImage2D(GL_TEXTURE_2D, 0, iComponents, iWidth, iHeight, 0, eFormat, GL_UNSIGNED_BYTE, pBytes);
+    #free(pBytes);
+    
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glEnable(GL_TEXTURE_2D);
+
+    #Set up lighting
+    fAmbLight=   [ 0.1, 0.1, 0.1 ];
+    fDiffLight =  [ 1.0, 1.0, 1.0 ];
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_COLOR_MATERIAL);
+    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, fAmbLight);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, fDiffLight);
+    
+    #Build a single display list
+    dlShip = glGenLists(1);
+    glNewList(dlShip, GL_COMPILE);
+    DrawShip();
+    glEndList();
+    
+
+#///////////////////////////////////////////////////////////
+#Called by GLUT library when idle (window not being
+#resized or moved)
+def TimerFunction( value):
+    
+    #Redraw the scene with new coordinates
+    glutPostRedisplay();
+    glutTimerFunc(5,TimerFunction, 1);
+    
+
+
+
+def ChangeSize( w,  h):
+	
+    
+
+    #Prevent a divide by zero, when window is too short
+    #(you cant make a window of zero width).
+    if(h == 0):
+        h = 1;
+
+    glViewport(0, 0, w, h);
+        
+    fAspect = w / h;
+
+    #Reset the coordinate system before modifying
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    #Set the clipping volume
+    gluPerspective(35.0, fAspect, 1.0, 50.0);
+        
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    #Light never changes, put it here
+    lightPos =  [-10.0, 100.0, 20.0, 1.0] ;
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+        
+
+
+glutInit();
+glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+glutInitWindowSize(800,600);
+glutCreateWindow("Display List Demo");
+glutReshapeFunc(ChangeSize);
+glutDisplayFunc(RenderScene);
+SetupRC();
+glutTimerFunc(5, TimerFunction, 1);
+glutMainLoop();    
+glDeleteLists(dlShip,1);
+
