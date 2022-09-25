@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 from Common.OpenGLCommon import *
 from Common.TGACommon import *
 # NURBS object pointer
+#pNurb = None
 pNurb = gluNewNurbsRenderer()
 
 # The number of control points for this curve
@@ -46,6 +47,8 @@ ctrlPoints = [[[-6.0, -6.0, 0.0],  # u = 0,	v = 0
 
 # Knot sequence for the NURB
 Knots = [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]
+
+
 
 
 # Called to draw the control points in Red over the NURB
