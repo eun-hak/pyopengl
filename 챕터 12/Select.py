@@ -332,8 +332,6 @@ def ProcessSelection(xPos,  yPos):
 	
 
 
-
-#///////////////////////////////////////////////////////////
 #This function does any needed initialization on the rendering
 #context.  Here it sets up and initializes the lighting for
 #the scene.
