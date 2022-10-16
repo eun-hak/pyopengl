@@ -88,28 +88,26 @@ def gltGetMatrixFromFrame(pFrame: GLTFrame, mMatrix: GLTVectorMatrix):
 
     # Calculate X Axis
     gltVectorCrossProduct(pFrame.vUp, pFrame.vForward, vXAxis)
-
     # Just populate the matrix
     # X column vector
     # memcpy(mMatrix, vXAxis, sizeof(GLTVector3))
-    vXAxis.value = mMatrix.value[0: 3]
+    mMatrix.value[0: 3] = vXAxis.value
     mMatrix.value[3] = 0.0
 
     # y column vector
     # memcpy(mMatrix+4, pFrame.vUp, sizeof(GLTVector3))
-    pFrame.vUp.value = mMatrix.value[4: 7]
+    mMatrix.value[4: 7] = pFrame.vUp.value
     mMatrix.value[7] = 0.0
 
     # z column vector
     # memcpy(mMatrix+8, pFrame.vForward, sizeof(GLTVector3))
-    pFrame.vForward.value = mMatrix.value[8: 11]
+    mMatrix.value[8: 11] = pFrame.vForward.value
     mMatrix.value[11] = 0.0
 
     #Translation / Location vector
     # memcpy(mMatrix+12, pFrame.vLocation, sizeof(GLTVector3))
-    pFrame.vLocation.value = mMatrix.value[12: 15]
+    mMatrix.value[12: 15] = pFrame.vLocation.value
     mMatrix.value[15] = 1.0
-
 
 # Apply an actors transform given it's frame of reference
 def gltApplyActorTransform(pFrame: GLTFrame):
@@ -209,7 +207,7 @@ def gltRotateFrameLocalY(pFrame: GLTFrame, fAngle: float):
 
     gltRotateVector(pFrame.vForward, mRotation, vNewForward)
     # memcpy(pFrame.vForward, vNewForward, sizeof(GLTVector3))
-    vNewForward = pFrame.vForward.value[0: 3]
+    pFrame.vForward.value[0: 3] = vNewForward.value
 
 
 #  Rotate a frame around it's local X axis
@@ -236,7 +234,7 @@ def gltRotateFrameLocalX(pFrame: GLTFrame, fAngle: float):
     vNewVect.value[1] = mRotation.value[1] * pFrame.vUp.value[0] + mRotation.value[5] * pFrame.vUp.value[1] + mRotation.value[9] * pFrame.vUp.value[2]
     vNewVect.value[2] = mRotation.value[2] * pFrame.vUp.value[0] + mRotation.value[6] * pFrame.vUp.value[1] + mRotation.value[10] * pFrame.vUp.value[2]
     # memcpy(pFrame.vUp, vNewVect, sizeof(GLfloat) * 3)
-    vNewVext = pFrame.vUp.value[0: 3]
+    pFrame.vUp.value[0: 3] = vNewVext.value
 
 
 # Rotate a frame around it's local Z axis
@@ -251,7 +249,7 @@ def gltRotateFrameLocalZ(pFrame: GLTFrame, fAngle: GLfloat):
     vNewVect.value[1] = mRotation.value[1] * pFrame.vUp.value[0] + mRotation.value[5] * pFrame.vUp.value[1] + mRotation.value[9] * pFrame.vUp.value[2]
     vNewVect.value[2] = mRotation.value[2] * pFrame.vUp.value[0] + mRotation.value[6] * pFrame.vUp.value[1] + mRotation.value[10] * pFrame.vUp.value[2]
     # memcpy(pFrame.vUp, vNewVect, sizeof(GLfloat) * 3)
-    vNewVext = pFrame.vUp.value[0: 3]
+    pFrame.vUp.value[0: 3] = vNewVext
 
 
 ###########################################
@@ -526,7 +524,7 @@ def gltNormalizeVector(vNormal: GLTVector3):
 # Copies a vector
 def gltCopyVector(vSource: GLTVector3, vDest: GLTVector3):
     # memcpy(vDest, vSource, sizeof(GLTVector3))
-    vSoure = vDest
+    vDest = vSoure
 
 
 # Get the dot product between two vectors
@@ -635,40 +633,109 @@ def gltDrawSphere(fRadius: float, iSlices: int, iStacks: int):
     dt = 1.0 / iStacks
     t = 1.0
     s = 0.0
-    rho, theta = 0.0, 0.0
-    for i in range(iStacks + 1):
+    
+    for i in range(0, iStacks):
         rho = i * drho
-    srho = math.sin(rho)
-    crho = math.cos(rho)
-    srhodrho = math.sin(rho + drho)
-    crhodrho = math.cos(rho + drho)
+        srho = math.sin(rho)
+        crho = math.cos(rho)
+        srhodrho = math.sin(rho + drho)
+        crhodrho = math.cos(rho + drho)
 
-    # Many sources of OpenGL sphere drawing code uses a triangle fan
-    # for the caps of the sphere. This however introduces texturing
-    # artifacts at the poles on some OpenGL implementations
-    glBegin(GL_TRIANGLE_STRIP)
-    s = 0.0
-    for j in range(iSlices + 1):
-        theta = 0.0 if (j == iSlices) else j * dtheta
-    stheta = -math.sin(theta)
-    ctheta = math.cos(theta)
+        # Many sources of OpenGL sphere drawing code uses a triangle fan
+        # for the caps of the sphere. This however introduces texturing
+        # artifacts at the poles on some OpenGL implementations
+        glBegin(GL_TRIANGLE_STRIP)
+        s = 0.0
+        for j in range(0, iSlices + 1):
+            theta = 0.0
+            if (j == iSlices):
+                theta = 0.0
+            else:
+                theta = j * dtheta
+            
+            stheta = -math.sin(theta)
+            ctheta = math.cos(theta)
 
-    x = stheta * srho
-    y = ctheta * srho
-    z = crho
+            x = stheta * srho
+            y = ctheta * srho
+            z = crho
+            
+            glTexCoord2f(s, t)
+            glNormal3f(x, y, z)
+            glVertex3f(x * fRadius, y * fRadius, z * fRadius)
 
-    glTexCoord2f(s, t)
-    glNormal3f(x, y, z)
-    glVertex3f(x * fRadius, y * fRadius, z * fRadius)
+            x = stheta * srhodrho
+            y = ctheta * srhodrho
+            z = crhodrho
+            glTexCoord2f(s, t - dt)
+            s += ds
+            glNormal3f(x, y, z)
+            glVertex3f(x * fRadius, y * fRadius, z * fRadius)
 
-    x = stheta * srhodrho
-    y = ctheta * srhodrho
-    z = crhodrho
-    glTexCoord2f(s, t - dt)
-    s += ds
-    glNormal3f(x, y, z)
-    glVertex3f(x * fRadius, y * fRadius, z * fRadius)
+        glEnd()
 
-    glEnd()
+        t -= dt
+        
+def gltDrawUnitAxes():
 
-    t -= dt
+    pObj = 0.0	# Temporary, used for quadrics
+
+    # Measurements
+    fAxisRadius = 0.025
+    fAxisHeight = 1.0
+    fArrowRadius = 0.06
+    fArrowHeight = 0.1
+
+    # Setup the quadric object
+    pObj = gluNewQuadric()
+    gluQuadricDrawStyle(pObj, GLU_FILL)
+    gluQuadricNormals(pObj, GLU_SMOOTH)
+    gluQuadricOrientation(pObj, GLU_OUTSIDE)
+    gluQuadricTexture(pObj, GLU_FALSE)
+
+    ###############################################
+    # Draw the blue Z axis first, with arrowed head
+    glColor3f(0.0, 0.0, 1.0)
+    gluCylinder(pObj, fAxisRadius, fAxisRadius, fAxisHeight, 10, 1)
+    glPushMatrix()
+    glTranslatef(0.0, 0.0, 1.0)
+    gluCylinder(pObj, fArrowRadius, 0.0, fArrowHeight, 10, 1)
+    glRotatef(180.0, 1.0, 0.0, 0.0)
+    gluDisk(pObj, fAxisRadius, fArrowRadius, 10, 1)
+    glPopMatrix()
+
+    ###############################################
+    # Draw the Red X axis 2nd, with arrowed head
+    glColor3f(1.0, 0.0, 0.0)
+    glPushMatrix()
+    glRotatef(90.0, 0.0, 1.0, 0.0)
+    gluCylinder(pObj, fAxisRadius, fAxisRadius, fAxisHeight, 10, 1)
+    glPushMatrix()
+    glTranslatef(0.0, 0.0, 1.0)
+    gluCylinder(pObj, fArrowRadius, 0.0, fArrowHeight, 10, 1)
+    glRotatef(180.0, 0.0, 1.0, 0.0)
+    gluDisk(pObj, fAxisRadius, fArrowRadius, 10, 1)
+    glPopMatrix()
+    glPopMatrix()
+
+    ###############################################
+    # Draw the Green Y axis 3rd, with arrowed head
+    glColor3f(0.0, 1.0, 0.0)
+    glPushMatrix()
+    glRotatef(-90.0, 1.0, 0.0, 0.0)
+    gluCylinder(pObj, fAxisRadius, fAxisRadius, fAxisHeight, 10, 1)
+    glPushMatrix()
+    glTranslatef(0.0, 0.0, 1.0)
+    gluCylinder(pObj, fArrowRadius, 0.0, fArrowHeight, 10, 1)
+    glRotatef(180.0, 1.0, 0.0, 0.0)
+    gluDisk(pObj, fAxisRadius, fArrowRadius, 10, 1)
+    glPopMatrix()
+    glPopMatrix()
+
+    ###############################################
+    # White Sphere at origin
+    glColor3f(1.0, 1.0, 1.0)
+    gluSphere(pObj, 0.05, 15, 15)
+
+    # Delete the quadric
+    gluDeleteQuadric(pObj)
